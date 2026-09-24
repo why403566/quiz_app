@@ -1,36 +1,62 @@
 name: Build APK
-on:
-  push:
-    branches: [ main ]
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unzip project
+      - name: Unzip
         run: |
           unzip -o quiz_app.zip
-          if [ -d "quiz_app" ]; then
-            shopt -s dotglob
-            mv quiz_app/* . || true
-          fi
-          rm -f quiz_app.zip
-      - name: Setup Java
-        uses: actions/setup-java@v4
+          shopt -s dotglob
+          mv quiz_app/*. || true
+          rm -rf quiz_app quiz_app.zip
+      - name: Fix Gradle
+        run: |
+          cat > android/app/build.gradle.kts << 'EOF'
+          plugins {
+              id("com.android.application")
+              id("kotlin-android")
+              id("dev.flutter.flutter-gradle-plugin")
+          }
+          android {
+              namespace = "com.example.quiz_app"
+              compileSdk = flutter.compileSdkVersion
+              ndkVersion = flutter.ndkVersion
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+              defaultConfig {
+                  applicationId = "com.example.quiz_app"
+                  minSdk = flutter.minSdkVersion
+                  targetSdk = flutter.targetSdkVersion
+                  versionCode = flutter.versionCode
+                  versionName = flutter.versionName
+              }
+              buildTypes {
+                  release {
+                      signingConfig = getByName("debug")
+                  }
+              }
+          }
+          flutter {
+              source = "../.."
+          }
+          EOF
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
-          channel: 'stable'
-      - name: Build APK
-        run: |
-          flutter pub get
-          flutter build apk --release
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          flutter-version: '3.24.5'
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
           path: build/app/outputs/flutter-apk/app-release.apk
