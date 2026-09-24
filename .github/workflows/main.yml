@@ -5,13 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unzip
+      - name: Unzip Project
         run: |
           unzip -o quiz_app.zip
-          shopt -s dotglob
-          mv quiz_app/*. || true
-          rm -rf quiz_app quiz_app.zip
-      - name: Fix Gradle
+          # Agar zip ke andar quiz_app folder hai to usko bahar lao
+          if [ -d "quiz_app" ]; then
+            mv quiz_app/*. || true
+            mv quiz_app/.*. 2>/dev/null || true
+            rm -rf quiz_app
+          fi
+          rm -f quiz_app.zip
+          ls -la
+      - name: Fix build.gradle.kts
         run: |
           cat > android/app/build.gradle.kts << 'EOF'
           plugins {
@@ -27,9 +32,6 @@ jobs:
                   sourceCompatibility = JavaVersion.VERSION_17
                   targetCompatibility = JavaVersion.VERSION_17
               }
-              kotlinOptions {
-                  jvmTarget = "17"
-              }
               defaultConfig {
                   applicationId = "com.example.quiz_app"
                   minSdk = flutter.minSdkVersion
@@ -39,7 +41,7 @@ jobs:
               }
               buildTypes {
                   release {
-                      signingConfig = getByName("debug")
+                      signingConfig = signingConfigs.getByName("debug")
                   }
               }
           }
