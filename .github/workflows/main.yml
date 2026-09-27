@@ -7,17 +7,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Unzip Project
         run: |
-          rm -rf quiz_app_temp
-          mkdir quiz_app_temp
-          unzip -o quiz_app.zip -d quiz_app_temp
-          # pubspec.yaml kahan hai dhondo
-          PUB_PATH=$(find quiz_app_temp -name "pubspec.yaml" | head -n 1)
-          echo "Found at: $PUB_PATH"
-          PROJECT_DIR=$(dirname "$PUB_PATH")
-          echo "Project dir: $PROJECT_DIR"
-          cp -r $PROJECT_DIR/*.
-          cp -r $PROJECT_DIR/.*. 2>/dev/null || true
-          rm -rf quiz_app_temp quiz_app.zip quiz_app
+          unzip -o quiz_app.zip
+          # Agar quiz_app_temp bana hai to usko bahar lao
+          if [ -d "quiz_app_temp" ]; then
+            cp -rf quiz_app_temp/*.
+            rm -rf quiz_app_temp
+          fi
+          # Agar quiz_app folder bana hai to usko bhi bahar lao
+          if [ -d "quiz_app" ] && [ -f "quiz_app/pubspec.yaml" ]; then
+            cp -rf quiz_app/*.
+            rm -rf quiz_app
+          fi
+          rm -f quiz_app.zip
           ls -la
       - name: Fix build.gradle.kts
         run: |
