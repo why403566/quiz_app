@@ -5,36 +5,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Unzip Project
         run: |
-          unzip -o quiz_app.zip
-          # Agar quiz_app_temp bana hai to usko bahar lao
+          if [ -f "quiz_app.zip" ]; then
+            unzip -o quiz_app.zip
+            rm -f quiz_app.zip
+          fi
           if [ -d "quiz_app_temp" ]; then
-            cp -rf quiz_app_temp/*.
+            cp -rf quiz_app_temp/..
             rm -rf quiz_app_temp
           fi
-          # Agar quiz_app folder bana hai to usko bhi bahar lao
           if [ -d "quiz_app" ] && [ -f "quiz_app/pubspec.yaml" ]; then
-            cp -rf quiz_app/*.
+            cp -rf quiz_app/..
             rm -rf quiz_app
           fi
-          rm -f quiz_app.zip
           ls -la
+
       - name: Fix build.gradle.kts
         run: |
           cat > android/app/build.gradle.kts << 'EOF'
           plugins {
               id("com.android.application")
-              id("kotlin-android")
+              id("org.jetbrains.kotlin.android")
               id("dev.flutter.flutter-gradle-plugin")
           }
           android {
               namespace = "com.example.quiz_app"
               compileSdk = flutter.compileSdkVersion
-              ndkVersion = "27.0.12077973"
+              ndkVersion = flutter.sdk.let { "27.0.12077973" }
               compileOptions {
                   sourceCompatibility = JavaVersion.VERSION_17
                   targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
               }
               defaultConfig {
                   applicationId = "com.example.quiz_app"
@@ -53,15 +58,19 @@ jobs:
               source = "../.."
           }
           EOF
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
+
       - run: flutter pub get
       - run: flutter build apk --release
+
       - uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
