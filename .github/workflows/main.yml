@@ -1,111 +1,26 @@
-import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const QuizApp());
-}
-
-class QuizApp extends StatelessWidget {
-  const QuizApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Quiz App',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const QuizScreen(),
-    );
-  }
-}
-
-class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key});
-
-  @override
-  State<QuizScreen> createState() => _QuizScreenState();
-}
-
-class _QuizScreenState extends State<QuizScreen> {
-  int currentQuestion = 0;
-  int score = 0;
-
-  final List<Map<String, dynamic>> questions = [
-    {
-      "question": "Pakistan ka capital kaunsa hai?",
-      "options": ["Karachi", "Lahore", "Islamabad", "Multan"],
-      "answer": 2
-    },
-    {
-      "question": "Flutter kis company ka hai?",
-      "options": ["Google", "Meta", "Apple", "Microsoft"],
-      "answer": 0
-    },
-    {
-      "question": "2 + 2 kitna hota hai?",
-      "options": ["3", "4", "5", "6"],
-      "answer": 1
-    },
-  ];
-
-  void checkAnswer(int selected) {
-    if (selected == questions[currentQuestion]["answer"]) {
-      score++;
-    }
-    if (currentQuestion < questions.length - 1) {
-      setState(() {
-        currentQuestion++;
-      });
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Result"),
-          content: Text("Tumhara Score: $score / ${questions.length}"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  currentQuestion = 0;
-                  score = 0;
-                });
-              },
-              child: const Text("Restart"),
-            )
-          ],
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Quiz App")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              "Q${currentQuestion + 1}: ${questions[currentQuestion]["question"]}",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-           ...List.generate(4, (index) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: ElevatedButton(
-                  onPressed: () => checkAnswer(index),
-                  child: Text(questions[currentQuestion]["options"][index]),
-                ),
-              );
-            }),
-            const Spacer(),
-            Text("Score: $score", style: const TextStyle(fontSize: 18)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          unzip -o quiz_app.zip
+          mv quiz_app/*. || true
+          mv quiz_app/.*. || true
+          rm -rf quiz_app quiz_app.zip
+          ls -la
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quiz-app-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
