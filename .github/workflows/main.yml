@@ -5,21 +5,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          unzip -o quiz_app.zip
-          mv quiz_app/*. || true
-          mv quiz_app/.*. || true
-          rm -rf quiz_app quiz_app.zip
+
+      - name: Extract zip
+        run: |
+          unzip -o quiz_app.zip -d.
           ls -la
+          # agar zip ke andar quiz_app folder hai to usko bahar nikalo
+          if [ -d quiz_app ]; then
+            cp -r quiz_app/*. || true
+            cp -r quiz_app/.*. || true
+          fi
+          ls -la
+          cat pubspec.yaml || echo "no pubspec"
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
+
       - run: flutter pub get
       - run: flutter build apk --release
+
       - uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
