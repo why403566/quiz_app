@@ -9,54 +9,29 @@ jobs:
           unzip -o quiz_app.zip -d. || true
           if [ -f quiz_app/pubspec.yaml ]; then cp -rf quiz_app/*.; fi
           if [ -f quiz_app/quiz_app/pubspec.yaml ]; then cp -rf quiz_app/quiz_app/*.; fi
-          rm -rf quiz_app quiz_app.zip || true
-      - name: Fix pubspec and main.dart
+          rm -rf quiz_app quiz_app.zip android || true
+      - name: Create fresh project
         run: |
           cat > pubspec.yaml << 'EOF'
           name: quiz_app
-          description: A simple Quiz App
+          description: Quiz App
           publish_to: 'none'
           version: 1.0.0+1
           environment:
-            sdk: '>=3.0.0 <4.0.0'
+            sdk: '>=3.2.0 <4.0.0'
           dependencies:
             flutter:
               sdk: flutter
-            cupertino_icons: ^1.0.6
+            cupertino_icons: ^1.0.5
           flutter:
             uses-material-design: true
           EOF
           mkdir -p lib
           cat > lib/main.dart << 'EOF'
           import 'package:flutter/material.dart';
-          void main(){runApp(const QuizApp());}
-          class QuizApp extends StatelessWidget{
-            const QuizApp({super.key});
-            @override Widget build(BuildContext context){
-              return const MaterialApp(debugShowCheckedModeBanner:false, home: QuizScreen());
-            }
-          }
-          class QuizScreen extends StatefulWidget{
-            const QuizScreen({super.key});
-            @override State<QuizScreen> createState()=> _QuizScreenState();
-          }
-          class _QuizScreenState extends State<QuizScreen>{
-            int q=0,score=0;
-            final list=[
-              {"q":"Pakistan ka Capital?","o":["Karachi","Lahore","Islamabad"],"a":2},
-              {"q":"Flutter kis ka hai?","o":["Google","Meta"],"a":0},
-              {"q":"2+2=?","o":["3","4"],"a":1},
-            ];
-            void check(int i){
-              if(i==list[q]["a"])score++;
-              if(q<list.length-1){setState(()=>q++);}else{
-                showDialog(context:context, builder:(_)=>AlertDialog(title:Text("Score $score/${list.length}"), actions:[TextButton(onPressed:(){Navigator.pop(context);setState((){q=0;score=0;});}, child: const Text("Restart"))]));
-              }
-            }
-            @override Widget build(BuildContext context){
-              return Scaffold(appBar:AppBar(title:const Text("Quiz App")), body:Padding(padding:const EdgeInsets.all(16), child:Column(children:[Text(list[q]["q"].toString(), style:const TextStyle(fontSize:20,fontWeight:FontWeight.bold)), const SizedBox(height:20),...List.generate((list[q]["o"] as List).length, (i)=>Container(margin:const EdgeInsets.only(bottom:10), width:double.infinity, child:ElevatedButton(onPressed:()=>check(i), child:Text(list[q]["o"][i].toString())))), Text("Score: $score")])));
-            }
-          }
+          void main()=>runApp(const MaterialApp(home:Quiz()));
+          class Quiz extends StatefulWidget{const Quiz({super.key});@override State<Quiz> createState()=>_Q();}
+          class _Q extends State<Quiz>{int i=0,s=0; final q=[{"q":"Pakistan Capital?","o":["KHI","LHR","ISB"],"a":2},{"q":"2+2?","o":["3","4"],"a":1}]; void n(int v){if(v==q[i]["a"])s++;if(i<q.length-1){setState(()=>i++);}else{showDialog(context:context,builder:(_)=>AlertDialog(title:Text("Score $s/${q.length}"),actions:[TextButton(onPressed:(){Navigator.pop(context);setState((){i=0;s=0;});},child:Text("Restart"))]));}} @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("Quiz App")),body:Padding(padding:EdgeInsets.all(16),child:Column(children:[Text(q[i]["q"].toString(),style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)),SizedBox(height:20),...List.generate((q[i]["o"] as List).length,(x)=>Container(width:double.infinity,margin:EdgeInsets.only(bottom:10),child:ElevatedButton(onPressed:()=>n(x),child:Text(q[i]["o"][x].toString())))),Text("Score: $s")])));}}
           EOF
       - uses: actions/setup-java@v4
         with:
@@ -65,8 +40,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
-      - run: flutter pub get
-      - run: flutter build apk --release
+      - run: |
+          flutter create. --platforms=android
+          flutter pub get
+          flutter build apk --release --verbose
       - uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
