@@ -1,26 +1,58 @@
+ 
 name: Build APK
-on: [push]
+
+on:
+  push:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Flutter project
+        run: |
+          unzip -o quiz_app.zip
+          ls -la
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: zulu
           java-version: '17'
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
-      - name: Build APK
+          channel: stable
+
+      - name: Setup Android project
         run: |
-          unzip -o quiz_app.zip || true
-          rm -rf android
-          flutter create. --platforms=android
+          flutter create . --platforms=android
+
+      - name: Install dependencies
+        run: |
           flutter clean
           flutter pub get
+
+      - name: Build APK
+        run: |
           flutter build apk --release
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+Sabse important correction
+Aapke code mein:
+flutter create. --platforms=android
+galat hai. Space hona chahiye:
+flutter create . --platforms=android
+Aur ye:
+rm -rf android
+android folder ko delete karta hai, phir Flutter usse dobara banata hai. Iski zarurat normally nahi hai.
+Lekin: agar ZIP ke andar project kisi folder ke andar hai, jaise quiz_app/, to upar wala workflow bhi path issue de sakta hai. Agar aap mujhe GitHub Actions ka exact red error bhej dein, main usi error ke hisaab se final YAML fix kar dunga.
