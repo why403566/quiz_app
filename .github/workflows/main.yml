@@ -16,10 +16,10 @@ jobs:
         run: |
           unzip -o quiz_app.zip || true
           rm -rf android
-          flutter create --platforms=android --project-name quiz_app.
+          flutter create. --platforms=android
           flutter clean
           flutter pub get
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: quiz-app-apk
