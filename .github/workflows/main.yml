@@ -6,17 +6,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract zip
+      - name: Extract correctly
         run: |
+          rm -rf lib pubspec.yaml android || true
           unzip -o quiz_app.zip -d.
+          # zip ke andar ka folder bahar lao
+          if [ -f quiz_app/pubspec.yaml ]; then cp -rf quiz_app/*.; fi
+          if [ -f quiz_app/quiz_app/pubspec.yaml ]; then cp -rf quiz_app/quiz_app/*.; fi
+          rm -rf quiz_app quiz_app.zip || true
           ls -la
-          # agar zip ke andar quiz_app folder hai to usko bahar nikalo
-          if [ -d quiz_app ]; then
-            cp -r quiz_app/*. || true
-            cp -r quiz_app/.*. || true
-          fi
-          ls -la
-          cat pubspec.yaml || echo "no pubspec"
+          cat pubspec.yaml
 
       - uses: actions/setup-java@v4
         with:
@@ -27,8 +26,9 @@ jobs:
         with:
           flutter-version: '3.24.5'
 
+      - run: flutter clean
       - run: flutter pub get
-      - run: flutter build apk --release
+      - run: flutter build apk --release --verbose
 
       - uses: actions/upload-artifact@v4
         with:
