@@ -12,16 +12,20 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
-      - run: |
-          unzip -o quiz_app.zip -d. || true
+      - name: Build APK
+        run: |
+          unzip -o quiz_app.zip -d temp || true
           rm -rf android
-          flutter create. --platforms=android
+          flutter create --platforms=android.
+          rm -rf lib
           mkdir -p lib
+          cp -r temp/*/lib/* lib/ 2>/dev/null || cp -r temp/lib/* lib/ 2>/dev/null || true
+          cp temp/*/pubspec.yaml. 2>/dev/null || cp temp/pubspec.yaml. 2>/dev/null || true
           cat > lib/main.dart << 'EOF'
           import 'package:flutter/material.dart';
-          void main()=>runApp(const MaterialApp(home:Quiz()));
+          void main()=>runApp(MaterialApp(home:Quiz()));
           class Quiz extends StatefulWidget{const Quiz({super.key});@override State<Quiz> createState()=>_Q();}
-          class _Q extends State<Quiz>{int i=0,s=0; final q=[{"q":"Pakistan Capital?","o":["KHI","LHR","ISB"],"a":2},{"q":"2+2?","o":["3","4"],"a":1}]; void n(int v){if(v==q[i]["a"])s++;if(i<q.length-1){setState(()=>i++);}else{showDialog(context:context,builder:(_)=>AlertDialog(title:Text("Score $s"),actions:[TextButton(onPressed:(){Navigator.pop(context);setState((){i=0;s=0;});},child:Text("Restart"))])));} @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("Quiz App")),body:Padding(padding:EdgeInsets.all(16),child:Column(children:[Text(q[i]["q"].toString(),style:TextStyle(fontSize:22,fontWeight:FontWeight.bold)),SizedBox(height:20),...List.generate((q[i]["o"] as List).length,(x)=>Container(width:double.infinity,margin:EdgeInsets.only(bottom:10),child:ElevatedButton(onPressed:()=>n(x),child:Text(q[i]["o"][x].toString())))),Text("Score: $s")])));}}
+          class _Q extends State<Quiz>{int i=0,s=0; final q=[{"q":"Capital?","o":["KHI","LHR","ISB"],"a":2}]; void n(int v){if(v==q[i]["a"])s++; setState(()=>i=(i+1)%q.length);} @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("Quiz")),body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(q[i]["q"].toString()),ElevatedButton(onPressed:()=>n(2),child:Text(q[i]["o"][2].toString()))])));}}
           EOF
           flutter pub get
           flutter build apk --release
