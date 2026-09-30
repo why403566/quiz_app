@@ -14,19 +14,9 @@ jobs:
           flutter-version: '3.24.5'
       - name: Build APK
         run: |
-          unzip -o quiz_app.zip -d temp || true
+          unzip -o quiz_app.zip || true
           rm -rf android
-          flutter create --platforms=android.
-          rm -rf lib
-          mkdir -p lib
-          cp -r temp/*/lib/* lib/ 2>/dev/null || cp -r temp/lib/* lib/ 2>/dev/null || true
-          cp temp/*/pubspec.yaml. 2>/dev/null || cp temp/pubspec.yaml. 2>/dev/null || true
-          cat > lib/main.dart << 'EOF'
-          import 'package:flutter/material.dart';
-          void main()=>runApp(MaterialApp(home:Quiz()));
-          class Quiz extends StatefulWidget{const Quiz({super.key});@override State<Quiz> createState()=>_Q();}
-          class _Q extends State<Quiz>{int i=0,s=0; final q=[{"q":"Capital?","o":["KHI","LHR","ISB"],"a":2}]; void n(int v){if(v==q[i]["a"])s++; setState(()=>i=(i+1)%q.length);} @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("Quiz")),body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(q[i]["q"].toString()),ElevatedButton(onPressed:()=>n(2),child:Text(q[i]["o"][2].toString()))])));}}
-          EOF
+          flutter create.
           flutter pub get
           flutter build apk --release
       - uses: actions/upload-artifact@v4
